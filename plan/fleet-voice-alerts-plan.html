@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fleet Voice Alerts — 5-Day Build Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #1e2430;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --green: #00ff88;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 60px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    border-left: 3px solid var(--accent);
+    padding-left: 24px;
+    margin-bottom: 64px;
+  }
+
+  .header .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .header h1 {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  .header h1 .highlight {
+    color: var(--accent);
+  }
+
+  .header .subtitle {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 600px;
+  }
+
+  /* Architecture overview */
+  .arch {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 56px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .arch::before {
+    content: 'SYSTEM ARCHITECTURE';
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--border);
+    letter-spacing: 0.15em;
+  }
+
+  .arch h2 {
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+  }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .flow-node {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-family: var(--mono);
+    line-height: 1.4;
+  }
+
+  .flow-node .node-label {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+
+  .flow-node .node-name {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .flow-node.accent { border-color: var(--accent); }
+  .flow-node.accent .node-name { color: var(--accent); }
+  .flow-node.orange { border-color: var(--accent2); }
+  .flow-node.orange .node-name { color: var(--accent2); }
+  .flow-node.purple { border-color: var(--accent3); }
+  .flow-node.purple .node-name { color: #a78bfa; }
+  .flow-node.green { border-color: var(--green); }
+  .flow-node.green .node-name { color: var(--green); }
+
+  .arrow {
+    color: var(--muted);
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  /* Tech stack pills */
+  .stack {
+    margin-top: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .pill.blue { background: rgba(0,229,255,0.1); color: var(--accent); border: 1px solid rgba(0,229,255,0.2); }
+  .pill.orange { background: rgba(255,107,53,0.1); color: var(--accent2); border: 1px solid rgba(255,107,53,0.2); }
+  .pill.purple { background: rgba(124,58,237,0.1); color: #a78bfa; border: 1px solid rgba(124,58,237,0.2); }
+  .pill.green { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
+
+  /* Day cards */
+  .days-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .day-card:hover {
+    border-color: var(--accent);
+  }
+
+  .day-header {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .day-number {
+    background: var(--surface2);
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-width: 80px;
+    border-right: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .day-number .dn-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+  }
+
+  .day-number .dn-num {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  .day-title-block {
+    padding: 20px 24px;
+    flex: 1;
+  }
+
+  .day-title-block .day-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    margin-bottom: 6px;
+  }
+
+  .day-title-block h3 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  .day-title-block .day-desc {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .day-body {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 600px) {
+    .day-body { grid-template-columns: 1fr; }
+    .flow { flex-direction: column; align-items: flex-start; }
+    .arrow { transform: rotate(90deg); }
+  }
+
+  .task-group h4 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .task-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .task-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #94a3b8;
+  }
+
+  .task-list li .tick {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+  }
+
+  .task-list li strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .deliverable {
+    grid-column: 1 / -1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+  }
+
+  .deliverable .del-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    white-space: nowrap;
+    letter-spacing: 0.1em;
+  }
+
+  .deliverable .del-text {
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  /* Colors per day */
+  .day-1 .dn-num { color: var(--accent); }
+  .day-1 .day-tag { color: var(--accent); }
+  .day-1 .tick { border-color: rgba(0,229,255,0.3); }
+  .day-1:hover { border-color: var(--accent); }
+  .day-1 .deliverable { border-color: rgba(0,229,255,0.2); }
+
+  .day-2 .dn-num { color: #38bdf8; }
+  .day-2 .day-tag { color: #38bdf8; }
+  .day-2 .tick { border-color: rgba(56,189,248,0.3); }
+  .day-2:hover { border-color: #38bdf8; }
+  .day-2 .deliverable { border-color: rgba(56,189,248,0.2); }
+
+  .day-3 .dn-num { color: var(--accent2); }
+  .day-3 .day-tag { color: var(--accent2); }
+  .day-3 .tick { border-color: rgba(255,107,53,0.3); }
+  .day-3:hover { border-color: var(--accent2); }
+  .day-3 .deliverable { border-color: rgba(255,107,53,0.2); }
+
+  .day-4 .dn-num { color: #a78bfa; }
+  .day-4 .day-tag { color: #a78bfa; }
+  .day-4 .tick { border-color: rgba(167,139,250,0.3); }
+  .day-4:hover { border-color: #a78bfa; }
+  .day-4 .deliverable { border-color: rgba(167,139,250,0.2); }
+
+  .day-5 .dn-num { color: var(--green); }
+  .day-5 .day-tag { color: var(--green); }
+  .day-5 .tick { border-color: rgba(0,255,136,0.3); }
+  .day-5:hover { border-color: var(--green); }
+  .day-5 .deliverable { border-color: rgba(0,255,136,0.2); }
+
+  /* Firestore schema */
+  .schema-block {
+    grid-column: 1 / -1;
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    color: #64748b;
+    overflow-x: auto;
+  }
+
+  .schema-block .key { color: #38bdf8; }
+  .schema-block .val { color: #a78bfa; }
+  .schema-block .comment { color: #374151; }
+  .schema-block .coll { color: var(--accent2); font-weight: 700; }
+
+  /* Notes section */
+  .notes {
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .notes { grid-template-columns: 1fr; }
+  }
+
+  .note-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .note-card h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .note-card p, .note-card li {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .note-card ul {
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* Section label */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Callout */
+  .callout {
+    background: rgba(0,229,255,0.05);
+    border: 1px solid rgba(0,229,255,0.15);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 32px;
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .callout strong { color: var(--accent); }
+
+  .footer {
+    margin-top: 80px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--border);
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="header">
+    <div class="label">// Geotab Add-In · Path D · Advanced Integration</div>
+    <h1>Fleet Voice<br><span class="highlight">Alerts</span></h1>
+    <p class="subtitle">A fleet control tower that automatically calls supervisors when vehicle exceptions occur — enabling real AI-powered voice conversations for instant fleet insights. 5-day build plan.</p>
+  </header>
+
+  <!-- Architecture -->
+  <div class="arch">
+    <h2>// CORE FLOW</h2>
+    <div class="flow">
+      <div class="flow-node accent">
+        <div class="node-label">Geotab</div>
+        <div class="node-name">GetFeed<br>Exception</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node purple">
+        <div class="node-label">ACE AI</div>
+        <div class="node-name">Enrich +<br>Script</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node" style="border-color:#1e40af">
+        <div class="node-label">Cloud Function</div>
+        <div class="node-name">Orchestrate<br>+ Firestore</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node orange">
+        <div class="node-label">Twilio</div>
+        <div class="node-name">Outbound<br>Call</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node green">
+        <div class="node-label">Google STT/TTS</div>
+        <div class="node-name">Bidirectional<br>Voice Conv.</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node purple">
+        <div class="node-label">ACE Live</div>
+        <div class="node-name">Real-time<br>Answers</div>
+      </div>
+    </div>
+    <div class="stack">
+      <span class="pill blue">Geotab MyGeotab SDK</span>
+      <span class="pill blue">GetFeed API</span>
+      <span class="pill purple">ACE (Geotab AI)</span>
+      <span class="pill blue">Google Cloud Functions</span>
+      <span class="pill blue">Firestore</span>
+      <span class="pill blue">Google STT / TTS</span>
+      <span class="pill orange">Twilio Voice</span>
+      <span class="pill orange">TwiML + Media Streams</span>
+      <span class="pill green">ES/PT/EN</span>
+    </div>
+  </div>
+
+  <!-- Callout -->
+  <div class="callout">
+    <strong>Design philosophy:</strong> Each Cloud Function does one job. Firestore is the single source of truth between the add-in and backend. The add-in only writes config and reads status — it never calls Twilio or Geotab directly. ACE is called at two points: once to enrich the exception before the call, and once per supervisor question during the live call.
+  </div>
+
+  <!-- Days -->
+  <div class="section-label">Day-by-Day Plan</div>
+  <div class="days-grid">
+
+    <!-- DAY 1 -->
+    <div class="day-card day-1">
+      <div class="day-header">
+        <div class="day-number">
+          <div class="dn-label">DAY</div>
+          <div class="dn-num">01</div>
+        </div>
+        <div class="day-title-block">
+          <div class="day-tag">// FOUNDATION</div>
+          <h3>Add-In Scaffold + Firestore Data Model + GCP Setup</h3>
+          <p class="day-desc">Everything that future days will build on. No shortcuts here.</p>
+        </div>
+      </div>
+      <div class="day-body">
+        <div class="task-group">
+          <h4>MORNING — Add-In Skeleton</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>Bootstrap MyGeotab add-in with <strong>addin.json</strong>, two views: <em>Setup</em> and <em>Status</em></li>
+            <li><span class="tick"></span>Setup page layout: 5 tabs — Twilio Credentials, Exception Rules, Escalation Contacts, Schedules, Language</li>
+            <li><span class="tick"></span>Status page layout: 4 KPI cards + active calls table + call log</li>
+            <li><span class="tick"></span>Geotab session auth wired — read current user + database name</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>AFTERNOON — Cloud + Data Model</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>Create GCP project, enable APIs: Cloud Functions, Firestore, Speech-to-Text, Text-to-Speech</li>
+            <li><span class="tick"></span>Design Firestore collections (see schema below)</li>
+            <li><span class="tick"></span>Add-in reads/writes <strong>configs/{dbName}</strong> via a thin Cloud Function REST endpoint (avoids exposing Firestore credentials in the add-in)</li>
+            <li><span class="tick"></span>Deploy a stub <code>GET /config</code> and <code>POST /config</code> Cloud Function — verify it works from the add-in</li>
+          </ul>
+        </div>
+        <div class="schema-block">
+<span class="coll">configs/</span>{dbName}<br>
+&nbsp;&nbsp;<span class="key">twilioAccountSid</span>: <span class="val">string</span><br>
+&nbsp;&nbsp;<span class="key">twilioAuthToken</span>: <span class="val">string (encrypted)</span><br>
+&nbsp;&nbsp;<span class="key">twilioFromNumber</span>: <span class="val">string</span><br>
+&nbsp;&nbsp;<span class="key">language</span>: <span class="val">"en" | "es" | "pt"</span><br>
+&nbsp;&nbsp;<span class="key">exceptionRules</span>: <span class="val">ExceptionRule[]</span><br>
+&nbsp;&nbsp;<span class="key">escalationContacts</span>: <span class="val">Contact[]</span><br>
+&nbsp;&nbsp;<span class="key">schedule</span>: <span class="val">{ enabled, days, startTime, endTime }</span><br>
+&nbsp;&nbsp;<span class="key">geotabServer</span>: <span class="val">string</span><br>
+&nbsp;&nbsp;<span class="key">sessionId</span>: <span class="val">string (refreshed by add-in)</span><br>
+<br>
+<span class="coll">calls/</span>{callSid}<br>
+&nbsp;&nbsp;<span class="key">dbName</span>, <span class="key">exceptionId</span>, <span class="key">vehicleId</span><br>
+&nbsp;&nbsp;<span class="key">status</span>: <span class="val">"queued"|"active"|"completed"|"escalated"|"no-answer"</span><br>
+&nbsp;&nbsp;<span class="key">contactIndex</span>: <span class="val">number</span> <span class="comment">// escalation level</span><br>
+&nbsp;&nbsp;<span class="key">script</span>: <span class="val">string</span> <span class="comment">// ACE-generated opening</span><br>
+&nbsp;&nbsp;<span class="key">conversation</span>: <span class="val">Message[]</span><br>
+&nbsp;&nbsp;<span class="key">startedAt</span>, <span class="key">endedAt</span>: <span class="val">timestamp</span><br>
+<br>
+<span class="coll">feed-cursors/</span>{dbName}<br>
+&nbsp;&nbsp;<span class="key">fromVersion</span>: <span class="val">string</span> <span class="comment">// GetFeed pagination</span>
+        </div>
+        <div class="deliverable">
+          <span class="del-label">✓ DELIVERABLE</span>
+          <span class="del-text">Add-in loads in MyGeotab, shows both views. Config saves to Firestore. GCP project live.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAY 2 -->
+    <div class="day-card day-2">
+      <div class="day-header">
+        <div class="day-number">
+          <div class="dn-label">DAY</div>
+          <div class="dn-num">02</div>
+        </div>
+        <div class="day-title-block">
+          <div class="day-tag">// DETECTION + ENRICHMENT</div>
+          <h3>GetFeed Poller + ACE Enrichment + Call Queue</h3>
+          <p class="day-desc">The intelligence layer. Exceptions get detected, enriched, and queued for calling.</p>
+        </div>
+      </div>
+      <div class="day-body">
+        <div class="task-group">
+          <h4>MORNING — GetFeed Poller (Cloud Function, timer)</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>Cloud Scheduler triggers <code>pollExceptions</code> every <strong>60 seconds</strong> per active database</li>
+            <li><span class="tick"></span>Call <code>GetFeed/ExceptionEvent</code> using stored Geotab session + <code>fromVersion</code> cursor</li>
+            <li><span class="tick"></span>Filter results against the configured <strong>ExceptionRules</strong> (by exception definition ID)</li>
+            <li><span class="tick"></span>Update <code>feed-cursors/{dbName}</code> after every poll — never double-process</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>AFTERNOON — ACE Enrichment + Queue</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>For each matched exception, call <strong>ACE</strong> with: driver name, vehicle, exception type, last 7-day safety score, recent exception history</li>
+            <li><span class="tick"></span>ACE returns: severity assessment, driver context summary, and <strong>opening call script</strong> (localized per config language)</li>
+            <li><span class="tick"></span>Write call document to <code>calls/{uuid}</code> with status <em>queued</em> + ACE script</li>
+            <li><span class="tick"></span>Respect schedule window — if outside hours, set status <em>scheduled</em> and skip calling</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>ACE Prompt Structure</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span><strong>System:</strong> "You are a fleet safety AI. Respond in {language}."</li>
+            <li><span class="tick"></span><strong>Context:</strong> Exception payload + driver history + safety KPIs</li>
+            <li><span class="tick"></span><strong>Ask:</strong> Generate a &lt;30-second natural voice script + 5 likely supervisor questions with answers</li>
+            <li><span class="tick"></span>Pre-cache those Q&amp;A pairs in the call doc for fast response during live call</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>Session Refresh</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>Add-in re-POSTs a fresh Geotab session token to Firestore every 30 min (Geotab sessions expire)</li>
+            <li><span class="tick"></span>Poller checks token freshness before each GetFeed call</li>
+          </ul>
+        </div>
+        <div class="deliverable">
+          <span class="del-label">✓ DELIVERABLE</span>
+          <span class="del-text">Trigger a test exception in Geotab → see a call document appear in Firestore with ACE-generated script within 90 seconds.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAY 3 -->
+    <div class="day-card day-3">
+      <div class="day-header">
+        <div class="day-number">
+          <div class="dn-label">DAY</div>
+          <div class="dn-num">03</div>
+        </div>
+        <div class="day-title-block">
+          <div class="day-tag">// VOICE ENGINE</div>
+          <h3>Twilio Outbound Call + Bidirectional Voice Conversation</h3>
+          <p class="day-desc">The hardest day. Get a real call happening with live Q&amp;A. Everything else is polish.</p>
+        </div>
+      </div>
+      <div class="day-body">
+        <div class="task-group">
+          <h4>MORNING — Outbound Call Trigger</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span><code>initiateCall</code> Cloud Function: watches Firestore for <em>queued</em> call docs, initiates Twilio outbound call to <strong>contacts[0]</strong></li>
+            <li><span class="tick"></span>TwiML response: <code>&lt;Say&gt;</code> the ACE opening script via <strong>Google TTS voice</strong> (WaveNet, localized language)</li>
+            <li><span class="tick"></span>After opening, <code>&lt;Gather&gt;</code> supervisor speech for up to 10 seconds, POST to <code>/voice-response</code> webhook</li>
+            <li><span class="tick"></span>Update call doc status to <em>active</em> when Twilio confirms call connected</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>AFTERNOON — Live Voice Loop</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span><code>/voice-response</code> Cloud Function receives transcribed speech from Twilio</li>
+            <li><span class="tick"></span>Check pre-cached Q&amp;A from call doc — if match found, respond instantly</li>
+            <li><span class="tick"></span>If no cached answer: call <strong>ACE live</strong> with current exception context + supervisor question</li>
+            <li><span class="tick"></span>ACE answer → <strong>Google TTS</strong> → base64 audio → Twilio <code>&lt;Play&gt;</code> or <code>&lt;Say&gt;</code> → loop back to <code>&lt;Gather&gt;</code></li>
+            <li><span class="tick"></span>Append each turn to <code>calls/{id}/conversation[]</code> for the status dashboard</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>Escalation Logic</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>Twilio <strong>no-answer / busy</strong> webhook → set status <em>no-answer</em>, increment <code>contactIndex</code></li>
+            <li><span class="tick"></span>If <code>contactIndex &lt; contacts.length</code>: retry with next contact after 2-min delay</li>
+            <li><span class="tick"></span>If all contacts exhausted: set status <em>escalated</em>, write final doc, notify via Twilio SMS fallback</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>Google TTS Config</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>English: <code>en-US-Wavenet-D</code></li>
+            <li><span class="tick"></span>Spanish: <code>es-US-Wavenet-B</code></li>
+            <li><span class="tick"></span>Portuguese: <code>pt-BR-Wavenet-B</code></li>
+            <li><span class="tick"></span>Speaking rate: 0.95 (clear, professional pace)</li>
+          </ul>
+        </div>
+        <div class="deliverable">
+          <span class="del-label">✓ DELIVERABLE</span>
+          <span class="del-text">Real phone gets called. Supervisor hears the ACE script. Asks a question. Gets an answer. Call ends and logs to Firestore.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAY 4 -->
+    <div class="day-card day-4">
+      <div class="day-header">
+        <div class="day-number">
+          <div class="dn-label">DAY</div>
+          <div class="dn-num">04</div>
+        </div>
+        <div class="day-title-block">
+          <div class="day-tag">// CONTROL TOWER UI</div>
+          <h3>Setup Page Polish + Real-Time Status Dashboard</h3>
+          <p class="day-desc">The add-in becomes a real product. Both views fully functional.</p>
+        </div>
+      </div>
+      <div class="day-body">
+        <div class="task-group">
+          <h4>MORNING — Setup Page (5 Tabs)</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span><strong>Twilio tab:</strong> AccountSID, Auth Token (masked), From Number + Test Connection button (makes a 5-sec test call)</li>
+            <li><span class="tick"></span><strong>Exception Rules tab:</strong> Multi-select exception definitions from Geotab, per-rule severity override, cooldown period (avoid duplicate calls)</li>
+            <li><span class="tick"></span><strong>Contacts tab:</strong> Ordered escalation list, drag to reorder, name + phone + role, delay between escalation levels</li>
+            <li><span class="tick"></span><strong>Schedule tab:</strong> Active days, time window, timezone (auto-detected from browser)</li>
+            <li><span class="tick"></span><strong>Language tab:</strong> EN / ES / PT selector — affects UI labels AND voice call language</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>AFTERNOON — Status Dashboard</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span><strong>KPI row:</strong> Today's calls, Active now, Escalations, Avg call duration — polled from Firestore every 10s</li>
+            <li><span class="tick"></span><strong>Active calls panel:</strong> Live list with vehicle, exception, contact being called, elapsed time, status badge</li>
+            <li><span class="tick"></span><strong>Call queue panel:</strong> Calls waiting to be initiated (status = queued/scheduled)</li>
+            <li><span class="tick"></span><strong>Call log table:</strong> Today's completed calls — click any row to expand the conversation transcript</li>
+            <li><span class="tick"></span>Manual "Retry" and "Dismiss" buttons per active call</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>REST Endpoints for UI Actions</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span><code>POST /retry-call</code> — re-queue a failed call</li>
+            <li><span class="tick"></span><code>POST /dismiss-call</code> — cancel and close</li>
+            <li><span class="tick"></span><code>GET /status/{dbName}</code> — aggregated stats (cached 10s in Firestore)</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>Add-In i18n</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>Single <code>i18n.js</code> object with EN/ES/PT keys</li>
+            <li><span class="tick"></span>All labels, tooltips, and status text localizable</li>
+            <li><span class="tick"></span>Language persists in config — consistent across sessions</li>
+          </ul>
+        </div>
+        <div class="deliverable">
+          <span class="del-label">✓ DELIVERABLE</span>
+          <span class="del-text">Both add-in views are fully functional. A non-technical supervisor can configure the entire system and monitor call activity without leaving MyGeotab.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAY 5 -->
+    <div class="day-card day-5">
+      <div class="day-header">
+        <div class="day-number">
+          <div class="dn-label">DAY</div>
+          <div class="dn-num">05</div>
+        </div>
+        <div class="day-title-block">
+          <div class="day-tag">// HARDENING + SHIP</div>
+          <h3>Edge Cases, Multi-DB, Testing &amp; Competition Packaging</h3>
+          <p class="day-desc">Close every gap. Make it bulletproof for the demo.</p>
+        </div>
+      </div>
+      <div class="day-body">
+        <div class="task-group">
+          <h4>MORNING — Resilience</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>Expired Geotab session handling (auto-prompt re-login in add-in)</li>
+            <li><span class="tick"></span>Twilio webhook timeout handling (ACE slow response fallback)</li>
+            <li><span class="tick"></span>Duplicate call prevention: check if vehicle already has an <em>active</em> call before queuing another</li>
+            <li><span class="tick"></span>Exception cooldown: don't re-alert same vehicle+exception within configured cooldown window</li>
+            <li><span class="tick"></span>Cloud Function error logging → Cloud Logging alerts</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>AFTERNOON — Demo Polish</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>End-to-end test: trigger a real exception, confirm call fires, conversation flows, log appears</li>
+            <li><span class="tick"></span>Test all three languages (EN/ES/PT) — call script and voice voice quality check</li>
+            <li><span class="tick"></span>Test escalation: configure contact 1 as an invalid number, verify escalation to contact 2</li>
+            <li><span class="tick"></span>Record a demo video walkthrough (Setup → trigger → live call → dashboard)</li>
+            <li><span class="tick"></span>Write <code>README.md</code> with GCP setup steps, environment variables, and add-in deployment instructions</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>Multi-DB Isolation</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>Every Firestore doc is namespaced by <code>dbName</code> — zero cross-contamination</li>
+            <li><span class="tick"></span>Each database uses its own Twilio credentials + contacts (fully independent)</li>
+            <li><span class="tick"></span>Cloud Functions are stateless — the <code>dbName</code> is passed with every request</li>
+          </ul>
+        </div>
+        <div class="task-group">
+          <h4>Vibe Coding Competition Checklist</h4>
+          <ul class="task-list">
+            <li><span class="tick"></span>Path D: ✅ Hosted add-in with external APIs + complex integration</li>
+            <li><span class="tick"></span>ACE: ✅ Used for enrichment + live call answering</li>
+            <li><span class="tick"></span>Real-time: ✅ GetFeed + Firestore polling + live call audio stream</li>
+            <li><span class="tick"></span>Production-ready: ✅ Multi-tenant, multi-language, escalation, scheduling</li>
+          </ul>
+        </div>
+        <div class="deliverable">
+          <span class="del-label">✓ DELIVERABLE</span>
+          <span class="del-text">Fully working add-in, deployed to GCP, installable in any MyGeotab database. Demo video recorded. README complete. Ready to submit.</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end days-grid -->
+
+  <!-- Notes -->
+  <div class="section-label" style="margin-top: 56px;">Strategic Notes</div>
+  <div class="notes">
+    <div class="note-card">
+      <h4>// WHY CLOUD FUNCTIONS (NOT CLOUD RUN)</h4>
+      <p>GetFeed polling at 60-second intervals is a perfect fit for event-driven Cloud Functions triggered by Cloud Scheduler. No idle compute cost, no containers to manage. Each function does one job and exits. Simple to deploy, simple to debug in 5 days.</p>
+    </div>
+    <div class="note-card">
+      <h4>// ACE IS CALLED TWICE PER EXCEPTION</h4>
+      <ul>
+        <li><strong>Pre-call:</strong> Enriches context, generates opening script + cached Q&amp;A (warm path)</li>
+        <li><strong>Live call:</strong> Only invoked if supervisor asks something not in the cache (cold path, &lt;3s budget)</li>
+      </ul>
+    </div>
+    <div class="note-card">
+      <h4>// TWILIO AUDIO STRATEGY</h4>
+      <p>Use Twilio's built-in <code>&lt;Gather speech="true"&gt;</code> for STT — it's battle-tested and removes the need to stream raw audio. Google STT is used via Google TTS (voice output). This avoids Media Streams complexity for a 5-day build.</p>
+    </div>
+    <div class="note-card">
+      <h4>// RISK REGISTER</h4>
+      <ul>
+        <li><strong>Geotab session expiry:</strong> Add-in refreshes token every 30 min</li>
+        <li><strong>ACE latency in live call:</strong> Pre-cached answers cover 80% of questions</li>
+        <li><strong>Twilio webhook timeout (5s):</strong> Return TwiML immediately, play hold music while ACE thinks</li>
+        <li><strong>Scope creep:</strong> NO new features after Day 3</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer">
+    Fleet Voice Alerts · Geotab Vibe Coding Competition 2026 · Path D<br>
+    Built with Claude + Geotab ACE + Google Cloud + Twilio
+  </div>
+
+</div>
+</body>
+</html>

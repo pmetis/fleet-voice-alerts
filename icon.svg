@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Background circle -->
+  <circle cx="24" cy="24" r="24" fill="#0f172a"/>
+
+  <!-- Phone handset -->
+  <path d="M18 14a2 2 0 0 0-2 2v2.5c0 7.456 6.044 13.5 13.5 13.5H32a2 2 0 0 0 2-2v-3a1 1 0 0 0-.684-.949l-4-1.333a1 1 0 0 0-1.158.48l-1.067 1.956A10.52 10.52 0 0 1 22.346 21.91l1.956-1.068a1 1 0 0 0 .48-1.158l-1.333-4A1 1 0 0 0 22.5 15H18z"
+        fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Signal arc 1 (small) -->
+  <path d="M30.5 16.5 a4 4 0 0 1 0 5.657"
+        fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Signal arc 2 (medium) -->
+  <path d="M33 14 a7.5 7.5 0 0 1 0 10.607"
+        fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Live dot -->
+  <circle cx="38" cy="12" r="3" fill="#10b981">
+    <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+</svg>

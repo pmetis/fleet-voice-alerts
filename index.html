@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fleet Voice Alerts</title>
+  <link rel="stylesheet" href="styles.css?v=5" />
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="fva-loading">
+  <div class="fva-spinner"></div>
+  <p>Connecting to Fleet Voice Alerts…</p>
+</div>
+
+<!-- Toast container -->
+<div id="fva-toast-container"></div>
+
+<!-- Main app -->
+<div id="fva-app">
+
+  <!-- ── Header ────────────────────────────────────── -->
+  <header class="fva-header">
+    <div class="fva-logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.5 16.5z"/>
+      </svg>
+      Fleet Voice Alerts
+      <span class="logo-dot"></span>
+    </div>
+
+    <nav class="fva-nav">
+      <button class="fva-nav-btn active" data-view="setup" id="nav-setup" data-i18n="nav_setup">Setup</button>
+      <button class="fva-nav-btn" data-view="status" id="nav-status" data-i18n="nav_status">Real-Time Status</button>
+    </nav>
+
+    <div class="fva-header-info">
+      <div class="fva-session-status">
+        <span class="fva-session-dot" id="session-dot"></span>
+        <span id="session-label">—</span>
+      </div>
+      <div class="fva-badge" id="db-badge"><span>—</span></div>
+    </div>
+  </header>
+
+  <!-- ── Setup View ─────────────────────────────────── -->
+  <div id="view-setup" class="fva-view active">
+
+    <!-- Tab navigation -->
+    <div class="fva-tabs">
+      <button class="fva-tab active" data-tab="twilio" data-i18n="tab_twilio">Twilio</button>
+      <button class="fva-tab" data-tab="rules"    data-i18n="tab_rules">Exception Rules</button>
+      <button class="fva-tab" data-tab="contacts" data-i18n="tab_contacts">Contacts</button>
+      <button class="fva-tab" data-tab="schedule" data-i18n="tab_schedule">Schedule</button>
+      <button class="fva-tab" data-tab="language" data-i18n="tab_language">Language</button>
+    </div>
+
+    <div class="fva-tab-content">
+
+      <!-- ══════════════════════════════════════════════
+           Twilio + Credentials tab
+           All content between this comment and /div#tab-twilio
+           belongs ONLY to this panel.
+           ══════════════════════════════════════════════ -->
+      <div id="tab-twilio" class="fva-panel active">
+
+        <h2 class="fva-panel-title" data-i18n="twilio_title">Twilio Credentials</h2>
+        <p class="fva-panel-desc" data-i18n="twilio_desc"></p>
+
+        <!-- Twilio fields -->
+        <div class="fva-form-grid">
+          <div class="fva-field">
+            <label class="fva-label" for="twilio-sid" data-i18n="twilio_sid">Account SID</label>
+            <input class="fva-input mono" id="twilio-sid" type="text" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="fva-field">
+            <label class="fva-label" for="twilio-token" data-i18n="twilio_token">Auth Token</label>
+            <input class="fva-input mono" id="twilio-token" type="password" autocomplete="new-password" />
+          </div>
+          <div class="fva-field">
+            <label class="fva-label" for="twilio-from" data-i18n="twilio_from">From Number</label>
+            <input class="fva-input mono" id="twilio-from" type="tel" placeholder="+1234567890" />
+          </div>
+        </div>
+
+        <hr class="fva-divider" />
+
+        <!-- Geotab service account fields -->
+        <h3 class="fva-panel-title" style="font-size:14px;margin-bottom:6px;">Geotab API Credentials</h3>
+        <p class="fva-panel-desc" style="margin-bottom:16px;">
+          The backend poller uses these credentials to call Geotab independently.
+          Use a dedicated service account — not your personal login.
+        </p>
+
+        <div class="fva-form-grid">
+          <div class="fva-field">
+            <label class="fva-label" for="geotab-user">Service Account Email</label>
+            <input class="fva-input" id="geotab-user" type="email" autocomplete="off"
+              placeholder="serviceaccount@yourcompany.com" />
+          </div>
+          <div class="fva-field">
+            <label class="fva-label" for="geotab-password">Password</label>
+            <input class="fva-input mono" id="geotab-password" type="password" autocomplete="new-password" />
+          </div>
+          <div class="fva-field">
+            <label class="fva-label" for="geotab-server">Server</label>
+            <input class="fva-input mono" id="geotab-server" type="text" placeholder="my.geotab.com" />
+            <p class="fva-field-hint">
+              e.g. <code>my.geotab.com</code> or <code>my1234.geotab.com</code>
+            </p>
+          </div>
+        </div>
+
+        <hr class="fva-divider" />
+
+        <!-- Webhook URL field -->
+        <div class="fva-field">
+          <label class="fva-label" for="webhook-base" data-i18n="twilio_webhook_base">Webhook Base URL</label>
+          <input class="fva-input mono" id="webhook-base" type="url"
+            placeholder="https://REGION-PROJECT.cloudfunctions.net" />
+          <p class="fva-field-hint" data-i18n="twilio_webhook_desc">
+            Twilio will POST to <code id="webhook-preview">{baseUrl}/voice-response</code>.
+          </p>
+        </div>
+
+        <!-- Action buttons — INSIDE the panel div -->
+        <div class="fva-btn-row">
+          <button class="fva-btn" id="btn-save-twilio" data-i18n="btn_save">Save</button>
+          <button class="fva-btn secondary" id="btn-test-twilio" data-i18n="btn_test_connection">Test Connection</button>
+          <span class="fva-field-hint" id="twilio-test-result" style="margin-left:8px;"></span>
+        </div>
+
+      </div><!-- /#tab-twilio -->
+
+      <!-- ══════════════════════════════════════════════
+           Exception Rules tab
+           ══════════════════════════════════════════════ -->
+      <div id="tab-rules" class="fva-panel">
+
+        <h2 class="fva-panel-title" data-i18n="rules_title">Exception Rules</h2>
+        <p class="fva-panel-desc" data-i18n="rules_desc"></p>
+
+        <div class="fva-search-bar">
+          <input class="fva-search-input" id="rules-search" type="search"
+            data-i18n-placeholder="rules_search" />
+          <button class="fva-btn secondary sm" id="btn-save-rules" data-i18n="btn_save">Save</button>
+        </div>
+
+        <div class="fva-table-wrap">
+          <table class="fva-table" id="rules-table">
+            <thead>
+              <tr>
+                <th data-i18n="rules_col_enabled">Enabled</th>
+                <th data-i18n="rules_col_name">Exception</th>
+                <th data-i18n="rules_col_severity">Severity</th>
+                <th data-i18n="rules_col_cooldown">Cooldown (min)</th>
+              </tr>
+            </thead>
+            <tbody id="rules-tbody">
+              <tr><td colspan="4" class="fva-table-empty" data-i18n="rules_loading">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /#tab-rules -->
+
+      <!-- ══════════════════════════════════════════════
+           Escalation Contacts tab
+           ══════════════════════════════════════════════ -->
+      <div id="tab-contacts" class="fva-panel">
+
+        <h2 class="fva-panel-title" data-i18n="contacts_title">Escalation Contacts</h2>
+        <p class="fva-panel-desc" data-i18n="contacts_desc"></p>
+
+        <div id="contacts-list" class="fva-contacts-list">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+
+        <div class="fva-btn-row">
+          <button class="fva-btn secondary sm" id="btn-add-contact" data-i18n="btn_add_contact">+ Add Contact</button>
+          <button class="fva-btn sm" id="btn-save-contacts" data-i18n="btn_save">Save</button>
+        </div>
+
+      </div><!-- /#tab-contacts -->
+
+      <!-- ══════════════════════════════════════════════
+           Schedule tab
+           ══════════════════════════════════════════════ -->
+      <div id="tab-schedule" class="fva-panel">
+
+        <h2 class="fva-panel-title" data-i18n="schedule_title">Alert Schedule</h2>
+        <p class="fva-panel-desc" data-i18n="schedule_desc"></p>
+
+        <div class="fva-field" style="margin-bottom:20px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <label class="fva-toggle">
+              <input type="checkbox" id="schedule-enabled" />
+              <span class="fva-toggle-slider"></span>
+            </label>
+            <span data-i18n="schedule_enabled">Enable scheduling</span>
+          </label>
+        </div>
+
+        <div id="schedule-config" style="display:none;">
+          <div class="fva-field" style="margin-bottom:20px;">
+            <label class="fva-label" data-i18n="schedule_days">Active Days</label>
+            <div class="fva-days-grid" id="days-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <div class="fva-form-grid">
+            <div class="fva-field">
+              <label class="fva-label" for="schedule-start" data-i18n="schedule_start">Start Time</label>
+              <input class="fva-input" id="schedule-start" type="time" value="07:00" />
+            </div>
+            <div class="fva-field">
+              <label class="fva-label" for="schedule-end" data-i18n="schedule_end">End Time</label>
+              <input class="fva-input" id="schedule-end" type="time" value="22:00" />
+            </div>
+            <div class="fva-field">
+              <label class="fva-label" for="schedule-tz" data-i18n="schedule_timezone">Timezone</label>
+              <select class="fva-input fva-select" id="schedule-tz">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="fva-btn-row">
+          <button class="fva-btn" id="btn-save-schedule" data-i18n="btn_save">Save</button>
+        </div>
+
+      </div><!-- /#tab-schedule -->
+
+      <!-- ══════════════════════════════════════════════
+           Language tab
+           ══════════════════════════════════════════════ -->
+      <div id="tab-language" class="fva-panel">
+
+        <h2 class="fva-panel-title" data-i18n="language_title">Language</h2>
+        <p class="fva-panel-desc" data-i18n="language_desc"></p>
+
+        <div class="fva-lang-options" id="lang-options">
+          <div class="fva-lang-option" data-lang="en">
+            <span class="fva-lang-flag">🇺🇸</span>
+            <div class="fva-lang-info">
+              <h4 data-i18n="language_en">English</h4>
+              <p>en-US-Wavenet-D · Google TTS</p>
+            </div>
+            <svg class="fva-lang-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <div class="fva-lang-option" data-lang="es">
+            <span class="fva-lang-flag">🇲🇽</span>
+            <div class="fva-lang-info">
+              <h4 data-i18n="language_es">Spanish</h4>
+              <p>es-US-Wavenet-B · Google TTS</p>
+            </div>
+            <svg class="fva-lang-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <div class="fva-lang-option" data-lang="pt">
+            <span class="fva-lang-flag">🇧🇷</span>
+            <div class="fva-lang-info">
+              <h4 data-i18n="language_pt">Portuguese</h4>
+              <p>pt-BR-Wavenet-B · Google TTS</p>
+            </div>
+            <svg class="fva-lang-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+        </div>
+
+        <div class="fva-btn-row" style="margin-top:24px;">
+          <button class="fva-btn" id="btn-save-language" data-i18n="btn_save">Save</button>
+        </div>
+
+      </div><!-- /#tab-language -->
+
+    </div><!-- /.fva-tab-content -->
+  </div><!-- /#view-setup -->
+
+  <!-- ── Status View ────────────────────────────────── -->
+  <div id="view-status" class="fva-view">
+    <div class="fva-status-view">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 style="font-size:16px;font-weight:700;" data-i18n="status_title">Real-Time Status</h2>
+        <button class="fva-btn secondary sm" id="btn-refresh-status" data-i18n="btn_refresh">↻ Refresh</button>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="fva-kpi-row">
+        <div class="fva-kpi-card kpi-blue">
+          <div class="fva-kpi-label" data-i18n="status_today_calls">Today's Calls</div>
+          <div class="fva-kpi-value" id="kpi-today">—</div>
+          <div class="fva-kpi-sub" id="kpi-today-sub"></div>
+        </div>
+        <div class="fva-kpi-card kpi-green">
+          <div class="fva-kpi-label" data-i18n="status_active">Active Now</div>
+          <div class="fva-kpi-value" id="kpi-active">—</div>
+          <div class="fva-kpi-sub" id="kpi-active-sub"></div>
+        </div>
+        <div class="fva-kpi-card kpi-amber">
+          <div class="fva-kpi-label" data-i18n="status_escalations">Escalations</div>
+          <div class="fva-kpi-value" id="kpi-escalations">—</div>
+          <div class="fva-kpi-sub" id="kpi-esc-sub"></div>
+        </div>
+        <div class="fva-kpi-card kpi-purple">
+          <div class="fva-kpi-label" data-i18n="status_avg_duration">Avg Duration</div>
+          <div class="fva-kpi-value" id="kpi-avg-dur">—</div>
+          <div class="fva-kpi-sub" id="kpi-dur-sub"></div>
+        </div>
+      </div>
+
+      <!-- Active Calls + Queue -->
+      <div class="fva-status-row">
+        <div class="fva-status-section">
+          <div class="fva-section-header">
+            <span class="fva-section-title" data-i18n="status_active_calls">Active Calls</span>
+            <span class="fva-section-count" id="active-count">0</span>
+          </div>
+          <table class="fva-table">
+            <thead>
+              <tr>
+                <th data-i18n="status_col_vehicle">Vehicle</th>
+                <th data-i18n="status_col_exception">Exception</th>
+                <th data-i18n="status_col_contact">Contacting</th>
+                <th data-i18n="status_col_elapsed">Elapsed</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="active-tbody">
+              <tr><td colspan="5" class="fva-table-empty" data-i18n="status_empty_active">No active calls.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="fva-queue-col">
+          <div class="fva-status-section" id="queue-section">
+            <div class="fva-section-header">
+              <span class="fva-section-title" data-i18n="status_queue">Call Queue</span>
+              <span class="fva-section-count" id="queue-count">0</span>
+            </div>
+            <table class="fva-table">
+              <thead>
+                <tr>
+                  <th data-i18n="status_col_vehicle">Vehicle</th>
+                  <th data-i18n="status_col_exception">Exception</th>
+                  <th data-i18n="status_col_status">Status</th>
+                  <th data-i18n="status_col_started">Started</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="queue-tbody">
+                <tr><td colspan="5" class="fva-table-empty" data-i18n="status_empty_queue">Queue is empty.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="queue-pagination" class="fva-pagination"></div>
+        </div>
+      </div>
+
+      <!-- Call Log -->
+      <div class="fva-status-section-full">
+        <div class="fva-section-header">
+          <span class="fva-section-title" data-i18n="status_log">Call Log</span>
+          <span class="fva-section-count" id="log-count">0</span>
+        </div>
+        <table class="fva-table">
+          <thead>
+            <tr>
+              <th data-i18n="status_col_vehicle">Vehicle</th>
+              <th data-i18n="status_col_exception">Exception</th>
+              <th data-i18n="status_col_contact">Contact</th>
+              <th data-i18n="status_col_status">Status</th>
+              <th data-i18n="status_col_started">Started</th>
+              <th data-i18n="status_col_duration">Duration</th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="log-tbody">
+            <tr><td colspan="8" class="fva-table-empty" data-i18n="status_empty_log">No calls today.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div><!-- /#view-status -->
+
+  <!-- Status bar -->
+  <div class="fva-status-bar">
+    <span class="fva-status-bar-item">
+      <span class="fva-session-dot" id="bar-session-dot"></span>
+      <span id="bar-session-text">Geotab connected</span>
+    </span>
+    <span class="fva-status-bar-item">
+      <span id="bar-db-name" style="font-family:var(--mono);font-size:11px;"></span>
+    </span>
+    <span class="fva-status-bar-item" style="margin-left:auto;">
+      <span id="bar-last-poll" style="color:var(--muted);font-size:11px;"></span>
+    </span>
+  </div>
+
+</div><!-- /#fva-app -->
+
+<script src="i18n.js?v=5"></script>
+<script src="app.js?v=5"></script>
+</body>
+</html>

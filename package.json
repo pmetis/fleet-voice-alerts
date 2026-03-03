@@ -1,0 +1,40 @@
+{
+  "name": "fleet-voice-alerts-functions",
+  "version": "1.0.0",
+  "description": "Cloud Functions for Fleet Voice Alerts",
+  "main": "index.js",
+  "engines": { "node": "20" },
+  "scripts": {
+    "start":       "npx @google-cloud/functions-framework --target=getConfig",
+    "start:poll":  "npx @google-cloud/functions-framework --target=pollExceptions",
+    "start:voice": "npx @google-cloud/functions-framework --target=voiceResponse",
+
+    "deploy:all": "npm run deploy:getConfig && npm run deploy:saveConfig && npm run deploy:saveSession && npm run deploy:getStatus && npm run deploy:getConversation && npm run deploy:testTwilio && npm run deploy:retryCall && npm run deploy:dismissCall && npm run deploy:pollExceptions && npm run deploy:initiateCall && npm run deploy:voiceResponse && npm run deploy:callStatusCallback && npm run deploy:synthesize",
+
+    "deploy:day1": "npm run deploy:getConfig && npm run deploy:saveConfig && npm run deploy:saveSession && npm run deploy:getStatus && npm run deploy:getConversation && npm run deploy:testTwilio && npm run deploy:retryCall && npm run deploy:dismissCall",
+    "deploy:day2": "npm run deploy:pollExceptions",
+    "deploy:day3": "npm run deploy:initiateCall && npm run deploy:voiceResponse && npm run deploy:callStatusCallback && npm run deploy:synthesize",
+
+    "deploy:getConfig":          "gcloud functions deploy getConfig          --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point getConfig          --source .",
+    "deploy:saveConfig":         "gcloud functions deploy saveConfig         --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point saveConfig         --source .",
+    "deploy:saveSession":        "gcloud functions deploy saveSession        --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point saveSession        --source .",
+    "deploy:getStatus":          "gcloud functions deploy getStatus          --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point getStatus          --source .",
+    "deploy:getConversation":    "gcloud functions deploy getConversation    --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point getConversation    --source .",
+    "deploy:testTwilio":         "gcloud functions deploy testTwilio         --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point testTwilio         --source .",
+    "deploy:retryCall":          "gcloud functions deploy retryCall          --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point retryCall          --source .",
+    "deploy:dismissCall":        "gcloud functions deploy dismissCall        --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point dismissCall        --source .",
+    "deploy:pollExceptions":     "gcloud functions deploy pollExceptions     --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point pollExceptions     --source . --timeout 540s --memory 512MB",
+    "deploy:initiateCall":       "gcloud functions deploy initiateCall       --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point initiateCall       --source . --timeout 120s",
+    "deploy:voiceResponse":      "gcloud functions deploy voiceResponse      --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point voiceResponse      --source . --timeout 30s",
+    "deploy:callStatusCallback": "gcloud functions deploy callStatusCallback --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point callStatusCallback --source . --timeout 30s",
+    "deploy:synthesize":         "gcloud functions deploy synthesize         --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --entry-point synthesize         --source . --timeout 60s"
+  },
+  "dependencies": {
+    "@google-cloud/firestore":          "^7.0.0",
+    "@google-cloud/functions-framework": "^3.0.0",
+    "@google-cloud/storage":            "^7.0.0",
+    "@google-cloud/text-to-speech":     "^5.0.0",
+    "twilio":                           "^5.0.0",
+    "uuid":                             "^9.0.0"
+  }
+}
