@@ -2,7 +2,7 @@
 
 > A Geotab add-in that detects fleet exceptions, enriches them with ACE (Geotab AI), and calls supervisors directly — speaking the alert, the history, and the live vehicle location. The supervisor can ask questions and get real answers, all without touching a screen.
 
-Built for the **Geotab Vibe Coding 2026** competition in 5 days, with AI as co-pilot throughout.
+Built for the **Geotab Vibe Coding 2026** competition, with AI as co-pilot throughout.
 
 ---
 
